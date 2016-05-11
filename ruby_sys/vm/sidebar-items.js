@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["rb_require",""],["ruby_init",""]]});
