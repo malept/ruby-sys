@@ -21,3 +21,9 @@ pub struct RBasic {
     pub flags: InternalValue,
     pub klass: InternalValue,
 }
+
+#[link_name = "st_table"]
+pub enum StTable {}
+
+pub type StData = *const c_void;
+pub type StMutData = *mut c_void;
