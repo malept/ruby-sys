@@ -1,6 +1,7 @@
 use std::env;
 use std::ffi::OsStr;
 use std::process::Command;
+use std::str;
 
 fn rbconfig(key: &str) -> Vec<u8> {
     let ruby = match env::var_os("RUBY") {
@@ -24,7 +25,6 @@ fn use_static() {
     // Cargo wants them as: `-l pthread -l gmp`
     let transformed_lib_args = libs.replace("-l", "-l ");
 
-    // println!("cargo:rustc-link-lib=static=ruby-static");
     println!("cargo:rustc-flags={}", transformed_lib_args);
 }
 
@@ -36,25 +36,19 @@ fn use_dylib(lib: Vec<u8>) {
 fn main() {
     let libdir = rbconfig("libdir");
 
-    let libruby_static = rbconfig("LIBRUBY_A");
+    let libruby_shared = rbconfig("ENABLE_SHARED");
     let libruby_so = rbconfig("RUBY_SO_NAME");
 
-    match (libruby_static.is_empty(), libruby_so.is_empty()) {
-        (false, true) => use_static(),
-        (true, false) => use_dylib(libruby_so),
-        (false, false) => {
+    match str::from_utf8(&libruby_shared).expect("RbConfig value not UTF-8!") {
+        "no" => use_static(),
+        "yes" => use_dylib(libruby_so),
+        _ => {
             if env::var_os("RUBY_STATIC").is_some() {
                 use_static()
             } else {
                 use_dylib(libruby_so)
             }
         },
-        _ => {
-            let msg = "Error! Could not find LIBRUBY_A or RUBY_SO_NAME. \
-            This means that no static, or dynamic libruby was found. \
-            Possible solution: build a new Ruby with the `--enable-shared` configure opt.";
-            panic!(msg)
-        }
     }
 
     println!("cargo:rustc-link-search={}",
