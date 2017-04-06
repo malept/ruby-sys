@@ -29,14 +29,16 @@ fn use_static() {
 }
 
 fn use_dylib() {
+    let libdir = rbconfig("libdir");
     let libruby_so = rbconfig("RUBY_SO_NAME");
 
     println!("cargo:rustc-link-lib=dylib={}",
              String::from_utf8_lossy(&libruby_so));
+    println!("cargo:rustc-link-search={}",
+             String::from_utf8_lossy(&libdir));
 }
 
 fn main() {
-    let libdir = rbconfig("libdir");
     let libruby_shared = rbconfig("ENABLE_SHARED");
 
     if env::var_os("RUBY_STATIC").is_some() {
@@ -54,7 +56,4 @@ fn main() {
             }
         }
     }
-
-    println!("cargo:rustc-link-search={}",
-             String::from_utf8_lossy(&libdir));
 }
