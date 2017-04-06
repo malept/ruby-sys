@@ -24,7 +24,7 @@ fn use_static() {
     // Cargo wants them as: `-l pthread -l gmp`
     let transformed_lib_args = libs.replace("-l", "-l ");
 
-    println!("cargo:rustc-link-lib=static=ruby-static");
+    // println!("cargo:rustc-link-lib=static=ruby-static");
     println!("cargo:rustc-flags={}", transformed_lib_args);
 }
 
