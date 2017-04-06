@@ -28,25 +28,25 @@ fn use_static() {
     println!("cargo:rustc-flags={}", transformed_lib_args);
 }
 
-fn use_dylib(lib: Vec<u8>) {
+fn use_dylib() {
+    let libruby_so = rbconfig("RUBY_SO_NAME");
+
     println!("cargo:rustc-link-lib=dylib={}",
-             String::from_utf8_lossy(&lib));
+             String::from_utf8_lossy(&libruby_so));
 }
 
 fn main() {
     let libdir = rbconfig("libdir");
-
     let libruby_shared = rbconfig("ENABLE_SHARED");
-    let libruby_so = rbconfig("RUBY_SO_NAME");
 
     if env::var_os("RUBY_STATIC").is_some() {
         use_static()
     } else {
         match str::from_utf8(&libruby_shared).expect("RbConfig value not UTF-8!") {
             "no" => use_static(),
-            "yes" => use_dylib(libruby_so),
+            "yes" => use_dylib(),
             _ => {
-                let msg = "Error! Could not find RbConfig::CONFIG['ENABLE_SHARED']. \
+                let msg = "Error! Couldn't find a valid value for RbConfig::CONFIG['ENABLE_SHARED']. \
                 This may mean that your ruby's build config is corrupted. \
                 Possible solution: build a new Ruby with the `--enable-shared` configure opt.";
                 panic!(msg)
