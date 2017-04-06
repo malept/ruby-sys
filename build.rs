@@ -46,11 +46,12 @@ fn main() {
             "no" => use_static(),
             "yes" => use_dylib(),
             _ => {
-                let msg = "Error! Couldn't find a valid value for RbConfig::CONFIG['ENABLE_SHARED']. \
+                let msg = "Error! Couldn't find a valid value for \
+                RbConfig::CONFIG['ENABLE_SHARED']. \
                 This may mean that your ruby's build config is corrupted. \
                 Possible solution: build a new Ruby with the `--enable-shared` configure opt.";
                 panic!(msg)
-            },
+            }
         }
     }
 
