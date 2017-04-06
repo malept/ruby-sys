@@ -28,7 +28,8 @@ before_install:
   rvm install "$BUILD_RUBY_VERSION"
   rvm use "$BUILD_RUBY_VERSION"
   ruby --version
-  ruby -e 'require "pp"; pp RbConfig::CONFIG'
+  ruby -r pp -e 'pp RbConfig::CONFIG'
+  ruby -r pp -e 'pp Dir.entries(RbConfig::CONFIG["libdir"])'
 
 before_script:
 - |
