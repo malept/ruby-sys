@@ -39,16 +39,19 @@ fn main() {
     let libruby_shared = rbconfig("ENABLE_SHARED");
     let libruby_so = rbconfig("RUBY_SO_NAME");
 
-    match str::from_utf8(&libruby_shared).expect("RbConfig value not UTF-8!") {
-        "no" => use_static(),
-        "yes" => use_dylib(libruby_so),
-        _ => {
-            if env::var_os("RUBY_STATIC").is_some() {
-                use_static()
-            } else {
-                use_dylib(libruby_so)
-            }
-        },
+    if env::var_os("RUBY_STATIC").is_some() {
+        use_static()
+    } else {
+        match str::from_utf8(&libruby_shared).expect("RbConfig value not UTF-8!") {
+            "no" => use_static(),
+            "yes" => use_dylib(libruby_so),
+            _ => {
+                let msg = "Error! Could not find RbConfig::CONFIG['ENABLE_SHARED']. \
+                This may mean that your ruby's build config is corrupted. \
+                Possible solution: build a new Ruby with the `--enable-shared` configure opt.";
+                panic!(msg)
+            },
+        }
     }
 
     println!("cargo:rustc-link-search={}",
