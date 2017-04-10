@@ -1,9 +1,8 @@
 use std::env;
 use std::ffi::OsStr;
 use std::process::Command;
-use std::str;
 
-fn rbconfig(key: &str) -> Vec<u8> {
+fn rbconfig(key: &str) -> String {
     let ruby = match env::var_os("RUBY") {
         Some(val) => val.to_os_string(),
         None => OsStr::new("ruby").to_os_string(),
@@ -14,20 +13,15 @@ fn rbconfig(key: &str) -> Vec<u8> {
         .output()
         .unwrap_or_else(|e| panic!("ruby not found: {}", e));
 
-    config.stdout
+    String::from_utf8(config.stdout).expect("RbConfig value not UTF-8!")
 }
 
 fn use_libdir() {
-    let libdir = rbconfig("libdir");
-    println!("cargo:rustc-link-search={}",
-             String::from_utf8_lossy(&libdir));
+    println!("cargo:rustc-link-search={}", rbconfig("libdir"));
 }
 
 fn transform_lib_args(rbconfig_key: &str, replacement: &str) -> String {
-    let rbconfig_value = rbconfig(rbconfig_key);
-    let libs = String::from_utf8_lossy(&rbconfig_value);
-
-    libs.replace("-l", replacement)
+    rbconfig(rbconfig_key).replace("-l", replacement)
 }
 
 fn use_static() {
@@ -38,20 +32,14 @@ fn use_static() {
 
 fn use_dylib() {
     use_libdir();
-    let libruby_so = rbconfig("RUBY_SO_NAME");
-    println!("cargo:rustc-link-lib=dylib={}",
-             String::from_utf8_lossy(&libruby_so));
+    println!("cargo:rustc-link-lib=dylib={}", rbconfig("RUBY_SO_NAME"));
 }
 
 fn main() {
-    let ruby_target_os = rbconfig("target_os");
-    let target_os = str::from_utf8(&ruby_target_os).expect("RbConfig value not UTF-8!");
-    let libruby_shared = rbconfig("ENABLE_SHARED");
-
-    if target_os != "mingw32" && env::var_os("RUBY_STATIC").is_some() {
+    if rbconfig("target_os") != "mingw32" && env::var_os("RUBY_STATIC").is_some() {
         use_static()
     } else {
-        match str::from_utf8(&libruby_shared).expect("RbConfig value not UTF-8!") {
+        match rbconfig("ENABLE_SHARED").as_str() {
             "no" => use_static(),
             "yes" => use_dylib(),
             _ => {
