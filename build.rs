@@ -37,11 +37,11 @@ fn use_static() {
     if target_os == "mingw32" {
         use_libdir();
         println!("cargo:rustc-link-lib=static={}", transform_lib_args("LIBRUBYARG_STATIC", ""));
-    } else {
-        // Ruby gives back the libs in the form: `-lpthread -lgmp`
-        // Cargo wants them as: `-l pthread -l gmp`
-        println!("cargo:rustc-flags={}", transform_lib_args("LIBS", "-l "));
     }
+
+    // Ruby gives back the libs in the form: `-lpthread -lgmp`
+    // Cargo wants them as: `-l pthread -l gmp`
+    println!("cargo:rustc-flags={}", transform_lib_args("LIBS", "-l "));
 }
 
 fn use_dylib() {
