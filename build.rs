@@ -31,14 +31,6 @@ fn transform_lib_args(rbconfig_key: &str, replacement: &str) -> String {
 }
 
 fn use_static() {
-    let ruby_target_os = rbconfig("target_os");
-    let target_os = str::from_utf8(&ruby_target_os).expect("RbConfig value not UTF-8!");
-
-    if target_os == "mingw32" {
-        use_libdir();
-        println!("cargo:rustc-link-lib=static={}", transform_lib_args("LIBRUBYARG_STATIC", ""));
-    }
-
     // Ruby gives back the libs in the form: `-lpthread -lgmp`
     // Cargo wants them as: `-l pthread -l gmp`
     println!("cargo:rustc-flags={}", transform_lib_args("LIBS", "-l "));
@@ -52,9 +44,11 @@ fn use_dylib() {
 }
 
 fn main() {
+    let ruby_target_os = rbconfig("target_os");
+    let target_os = str::from_utf8(&ruby_target_os).expect("RbConfig value not UTF-8!");
     let libruby_shared = rbconfig("ENABLE_SHARED");
 
-    if env::var_os("RUBY_STATIC").is_some() {
+    if target_os != "mingw32" && env::var_os("RUBY_STATIC").is_some() {
         use_static()
     } else {
         match str::from_utf8(&libruby_shared).expect("RbConfig value not UTF-8!") {
