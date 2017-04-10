@@ -17,29 +17,38 @@ fn rbconfig(key: &str) -> Vec<u8> {
     config.stdout
 }
 
+fn use_libdir() {
+    let libdir = rbconfig("libdir");
+    println!("cargo:rustc-link-search={}",
+             String::from_utf8_lossy(&libdir));
+}
+
+fn transform_lib_args(rbconfig_key: &str, replacement: &str) -> String {
+    let rbconfig_value = rbconfig(rbconfig_key);
+    let libs = String::from_utf8_lossy(&rbconfig_value);
+
+    libs.replace("-l", replacement)
+}
+
 fn use_static() {
-    let ruby_libs = rbconfig("LIBS");
-    let libs = String::from_utf8_lossy(&ruby_libs);
     let ruby_target_os = rbconfig("target_os");
     let target_os = str::from_utf8(&ruby_target_os).expect("RbConfig value not UTF-8!");
 
-    if target_os != "mingw32" {
+    if target_os == "mingw32" {
+        use_libdir();
+        println!("cargo:rustc-link-lib=static={}", transform_lib_args("LIBRUBYARG_STATIC", ""));
+    } else {
         // Ruby gives back the libs in the form: `-lpthread -lgmp`
         // Cargo wants them as: `-l pthread -l gmp`
-        let transformed_lib_args = libs.replace("-l", "-l ");
-
-        println!("cargo:rustc-flags={}", transformed_lib_args);
+        println!("cargo:rustc-flags={}", transform_lib_args("LIBS", "-l "));
     }
 }
 
 fn use_dylib() {
-    let libdir = rbconfig("libdir");
+    use_libdir();
     let libruby_so = rbconfig("RUBY_SO_NAME");
-
     println!("cargo:rustc-link-lib=dylib={}",
              String::from_utf8_lossy(&libruby_so));
-    println!("cargo:rustc-link-search={}",
-             String::from_utf8_lossy(&libdir));
 }
 
 fn main() {
