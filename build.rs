@@ -20,12 +20,16 @@ fn rbconfig(key: &str) -> Vec<u8> {
 fn use_static() {
     let ruby_libs = rbconfig("LIBS");
     let libs = String::from_utf8_lossy(&ruby_libs);
+    let ruby_target_os = rbconfig("target_os");
+    let target_os = str::from_utf8(&ruby_target_os).expect("RbConfig value not UTF-8!");
 
-    // Ruby gives back the libs in the form: `-lpthread -lgmp`
-    // Cargo wants them as: `-l pthread -l gmp`
-    let transformed_lib_args = libs.replace("-l", "-l ");
+    if target_os != "mingw32" {
+        // Ruby gives back the libs in the form: `-lpthread -lgmp`
+        // Cargo wants them as: `-l pthread -l gmp`
+        let transformed_lib_args = libs.replace("-l", "-l ");
 
-    println!("cargo:rustc-flags={}", transformed_lib_args);
+        println!("cargo:rustc-flags={}", transformed_lib_args);
+    }
 }
 
 fn use_dylib() {
